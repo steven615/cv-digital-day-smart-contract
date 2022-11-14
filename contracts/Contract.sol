@@ -11,6 +11,8 @@ contract Contract is ERC1155Base {
         uint128 _royaltyBps
     ) ERC1155Base(_name, _symbol, _royaltyRecipient, _royaltyBps) {}
 
+    address public winner;
+
     /**
         The user can increase the supply of current token.
         The tokenId of First NFT is 0
@@ -18,14 +20,26 @@ contract Contract is ERC1155Base {
      */
     function mintNFTSupplyTo(uint256 _tokenId) public virtual {
         address caller = msg.sender;
-        require(_tokenId == 0 || _tokenId == 1, "invalid id");
 
+        // Second NFT
         if (_tokenId == 1) {
             uint256 firstNFTbalance = balanceOf[caller][0];
             require(firstNFTbalance >= 1, "Not enough First NFT tokens owned");
-            _burn(caller, 0, firstNFTbalance);
+        }
+
+        // Third NFT
+        if (_tokenId == 2) {
+            require(caller == winner, "Only the winner can mint this NFT");
+            require(
+                totalSupply[_tokenId] < 1,
+                "The third NFT supply must 1 or less."
+            );
         }
 
         _mint(caller, _tokenId, 1, "");
+    }
+
+    function setWinner(address _winner) public virtual onlyOwner {
+        winner = _winner;
     }
 }
