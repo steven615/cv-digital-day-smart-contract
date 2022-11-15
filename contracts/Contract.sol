@@ -1,42 +1,54 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "@thirdweb-dev/contracts/base/ERC1155Base.sol";
+import "@thirdweb-dev/contracts/base/ERC1155Drop.sol";
 
-contract Contract is ERC1155Base {
+contract Contract is ERC1155Drop {
+    address public winner;
+
     constructor(
         string memory _name,
         string memory _symbol,
         address _royaltyRecipient,
-        uint128 _royaltyBps
-    ) ERC1155Base(_name, _symbol, _royaltyRecipient, _royaltyBps) {}
+        uint128 _royaltyBps,
+        address _primarySaleRecipient
+    )
+        ERC1155Drop(
+            _name,
+            _symbol,
+            _royaltyRecipient,
+            _royaltyBps,
+            _primarySaleRecipient
+        )
+    {}
 
-    address public winner;
-
-    /**
-        The user can increase the supply of current token.
-        The tokenId of First NFT is 0
-        The tokenId of Second NFT is 1
-     */
-    function mintNFTSupplyTo(uint256 _tokenId) public virtual {
-        address caller = msg.sender;
+    function _beforeClaim(
+        uint256 _tokenId,
+        address _receiver,
+        uint256,
+        address,
+        uint256,
+        AllowlistProof calldata,
+        bytes memory
+    ) internal view virtual override {
+        if (_tokenId >= nextTokenIdToLazyMint) {
+            revert("Not enough minted tokens");
+        }
 
         // Second NFT
         if (_tokenId == 1) {
-            uint256 firstNFTbalance = balanceOf[caller][0];
+            uint256 firstNFTbalance = balanceOf[_receiver][0];
             require(firstNFTbalance >= 1, "Not enough First NFT tokens owned");
         }
 
         // Third NFT
         if (_tokenId == 2) {
-            require(caller == winner, "Only the winner can mint this NFT");
+            require(_receiver == winner, "Only the winner can mint this NFT");
             require(
                 totalSupply[_tokenId] < 1,
                 "The third NFT supply must 1 or less."
             );
         }
-
-        _mint(caller, _tokenId, 1, "");
     }
 
     function setWinner(address _winner) public virtual onlyOwner {
