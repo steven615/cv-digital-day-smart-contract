@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 import "@thirdweb-dev/contracts/base/ERC1155Drop.sol";
 
 contract Contract is ERC1155Drop {
-    address public winner;
-
     constructor(
         string memory _name,
         string memory _symbol,
@@ -43,15 +41,19 @@ contract Contract is ERC1155Drop {
 
         // Third NFT
         if (_tokenId == 2) {
-            require(_receiver == winner, "Only the winner can mint this NFT");
+            uint256 firstNFTbalance = balanceOf[_receiver][0];
+            require(firstNFTbalance >= 1, "Not enough First NFT tokens owned");
+
+            uint256 secondNFTbalance = balanceOf[_receiver][1];
+            require(
+                secondNFTbalance >= 1,
+                "Not enough Second NFT tokens owned"
+            );
+
             require(
                 totalSupply[_tokenId] < 1,
                 "The third NFT supply must 1 or less."
             );
         }
-    }
-
-    function setWinner(address _winner) public virtual onlyOwner {
-        winner = _winner;
     }
 }
